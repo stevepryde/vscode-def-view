@@ -93,9 +93,9 @@ export class Renderer {
 		// Hack for C#/Godot definitions with no function body.
 		// Also for variable defs.
 		let trimmedStart = lines[range.start.line].trim();
-		if (trimmedStart.search(/;$/) >= 0 || trimmedStart.indexOf('{') >= 0) {
+		if (trimmedStart.search(/;$/) >= 0) {
+			console.debug(`start inside block - line ${range.start.line}`);
 			insideBlock = true;
-			console.debug("insideBlock!");
 		}
 
 		for (let n = range.start.line; n < lines.length; n++) {
@@ -105,19 +105,11 @@ export class Renderer {
 			let firstChar = trimmedLine.charAt(0);
 			let lastChar = trimmedLine.charAt(trimmedLine.length - 1);
 
-			// Nasty hacks :P
-			if (lineIndent > indent || firstChar === '{' || lastChar === ':' || lastChar === '{') {
-				insideBlock = true;
-				if (n > lastLine) {
-					lastLine = n;
-				}
-				continue;
-			}
-
 			if (trimmedLine.length > 0) {
 				// Keep searching until the next non-blank line that is 
 				// at a shorter indent level.
 				if (lineIndent < indent) {
+					console.debug("BREAK: indent less");
 					break;
 				} else if (insideBlock && lineIndent === indent) {
 					// Ignore {
@@ -152,7 +144,16 @@ export class Renderer {
 						}
 					}
 
+					console.debug("BREAK: inside block & indent same");
 					break;
+				}
+
+				// Nasty hacks :P
+				let inBlockFirstChars = ['{'];
+				let inBlockLastChars = [':', '{', ';', '}'];
+				if (lineIndent > indent || inBlockFirstChars.includes(firstChar) || inBlockLastChars.includes(lastChar)) {
+					console.debug(`inside block now (line ${n}`);
+					insideBlock = true;
 				}
 
 				if (n > lastLine) {
@@ -162,6 +163,6 @@ export class Renderer {
 		}
 		console.debug(`lastLine = ${lastLine}`);
 		lines = lines.slice(firstLine, lastLine + 1).map((x) => { return x.substring(indent) });
-		return lines.join("\n")
+		return lines.join("\n") + "\n";
 	}
 }
