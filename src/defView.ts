@@ -214,7 +214,6 @@ export class DefViewViewProvider implements vscode.WebviewViewProvider {
 		}
 
 		let definitions = await this.getDefinitionAtCurrentPositionInEditor(editor);
-		console.debug(`definitions = ${typeof definitions} ${JSON.stringify(definitions)}`);
 
 		if (token.isCancellationRequested) {
 			return '';

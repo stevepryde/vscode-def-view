@@ -50,64 +50,118 @@ export class Renderer {
 
 	private async getFileContents(uri: vscode.Uri, range: vscode.Range): Promise<string> {
 		const doc = await vscode.workspace.openTextDocument(uri);
+		console.debug(`uri = ${uri}`);
+		console.debug(`range = ${range.start.line} - ${range.end.line}`);
+
+		// Read entire file.
+		const rangeText = new vscode.Range(0, 0, doc.lineCount, 0);
+		let lines = doc.getText(rangeText).split(/\r?\n/);
+		let indent = lines[range.start.line].search(/\S/);
 
 		// First, capture any preceding lines that may be important.
-		const rangePre = new vscode.Range(range.start.line, 0, doc.lineCount, 0);
-		let linesPre = doc.getText(rangePre).split(/\r?\n/);
-		let firstLine = 0;
-		for (let n = linesPre.length; n >= 0; n--) {
-			if (linesPre[n - 1].length === 0) {
-				firstLine = n;
+		// Typically only comments and attributes.
+		const prefixes = ['@', '/', '#', '[', ';', '-'];
+		const startLinePre = Math.max(0, range.start.line - 20);
+		let firstLine = range.start.line;
+		for (let n = range.start.line - 1; n >= startLinePre; n--) {
+			let lineIndent = lines[n].search(/\S/);
+			if (lineIndent < indent) {
 				break;
 			}
-		}
-		linesPre = linesPre.slice(firstLine);
 
-		// Now capture any remaining lines until the end of the function.
-		const r = new vscode.Range(range.start.line, 0, doc.lineCount, 0);
-		let lines = doc.getText(r).split(/\r?\n/);
-		let lastLine = 0;
-		let indent = lines[0].search(/\S/);
-		console.debug(`indent = ${indent}`);
-		let insideBlock = false;
-		for (let n = 1; n < lines.length; n++) {
-			let lineIndent = lines[n].search(/\S/);
-			console.debug(`line ${n} indent = ${lineIndent}: ${lines[n]}`);
-
-			if (lineIndent > indent) {
-				insideBlock = true;
+			console.debug(`line ${n}: ${lines[n]}`);
+			if (lines[n].length === 0) {
+				break;
 			}
 
-			if (lines[n].trim().length > 0) {
-				console.debug(`line ${n} not empty`);
+			// Only allow lines starting with specific chars.
+			// Typically comments.
+			if (!prefixes.includes(lines[n].trim().charAt(0))) {
+				let c = lines[n].trim().charAt(0);
+				console.debug(`first char is ${c}`);
+				break;
+			}
+
+			firstLine = n;
+		}
+		console.debug(`firstLine = ${firstLine}`);
+
+		// Now capture any remaining lines until the end of the function.
+		let lastLine = range.end.line;
+
+		let insideBlock = false;
+		// Hack for C#/Godot definitions with no function body.
+		// Also for variable defs.
+		let trimmedStart = lines[range.start.line].trim();
+		if (trimmedStart.search(/;$/) >= 0 || trimmedStart.indexOf('{') >= 0) {
+			insideBlock = true;
+			console.debug("insideBlock!");
+		}
+
+		for (let n = range.start.line; n < lines.length; n++) {
+			let lineIndent = lines[n].search(/\S/);
+			let trimmedLine = lines[n].trim();
+
+			let firstChar = trimmedLine.charAt(0);
+			let lastChar = trimmedLine.charAt(trimmedLine.length - 1);
+
+			// Nasty hacks :P
+			if (lineIndent > indent || firstChar === '{' || lastChar === ':' || lastChar === '{') {
+				insideBlock = true;
+				if (n > lastLine) {
+					lastLine = n;
+				}
+				continue;
+			}
+
+			if (trimmedLine.length > 0) {
 				// Keep searching until the next non-blank line that is 
 				// at a shorter indent level.
 				if (lineIndent < indent) {
 					break;
 				} else if (insideBlock && lineIndent === indent) {
 					// Ignore {
-					if (lines[n].charAt(lineIndent) === '{') {
-						console.debug(`ignore { on line ${n}`);
+					// For C#/C/C++ where the { is on the next line.
+					if (firstChar === '{') {
+						if (n > lastLine) {
+							lastLine = n;
+						}
+						continue;
+					}
+
+					// If the character is ), include it and keep going.
+					// This catches things like this:
+					// ```
+					// fn some_func(
+					//     a: String	
+					// ) {
+					// ```
+					if (firstChar === ')') {
+						if (n > lastLine) {
+							lastLine = n;
+						}
 						continue;
 					}
 
 					// If the character is }, include it.
 					// Otherwise, exclude it (for languages like Python, 
 					// this would be the start of the next function)
-					if (lines[n].charAt(lineIndent) === '}') {
-						console.debug(`found } on line ${n}`);
-						lastLine = n;
+					if (firstChar === '}') {
+						if (n > lastLine) {
+							lastLine = n;
+						}
 					}
 
 					break;
 				}
 
-				lastLine = n;
-				console.debug(`lastLine = ${n}`);
+				if (n > lastLine) {
+					lastLine = n;
+				}
 			}
 		}
-		lines = lines.slice(0, lastLine + 1).map((x) => { return x.substring(indent) });
-
-		return [...linesPre, ...lines].join("\n")
+		console.debug(`lastLine = ${lastLine}`);
+		lines = lines.slice(firstLine, lastLine + 1).map((x) => { return x.substring(indent) });
+		return lines.join("\n")
 	}
 }
