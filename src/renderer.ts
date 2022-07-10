@@ -61,9 +61,8 @@ export class Renderer {
 		// First, capture any preceding lines that may be important.
 		// Typically only comments and attributes.
 		const prefixes = ['@', '/', '#', '[', ';', '-'];
-		const startLinePre = Math.max(0, range.start.line - 20);
 		let firstLine = range.start.line;
-		for (let n = range.start.line - 1; n >= startLinePre; n--) {
+		for (let n = range.start.line - 1; n >= 0; n--) {
 			let lineIndent = lines[n].search(/\S/);
 			if (lineIndent < indent) {
 				break;
