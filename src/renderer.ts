@@ -50,8 +50,8 @@ export class Renderer {
 
 	private async getFileContents(uri: vscode.Uri, range: vscode.Range): Promise<string> {
 		const doc = await vscode.workspace.openTextDocument(uri);
-		console.debug(`uri = ${uri}`);
-		console.debug(`range = ${range.start.line} - ${range.end.line}`);
+		// console.debug(`uri = ${uri}`);
+		// console.debug(`range = ${range.start.line} - ${range.end.line}`);
 
 		// Read entire file.
 		const rangeText = new vscode.Range(0, 0, doc.lineCount, 0);
@@ -68,7 +68,6 @@ export class Renderer {
 				break;
 			}
 
-			console.debug(`line ${n}: ${lines[n]}`);
 			if (lines[n].length === 0) {
 				break;
 			}
@@ -76,14 +75,11 @@ export class Renderer {
 			// Only allow lines starting with specific chars.
 			// Typically comments.
 			if (!prefixes.includes(lines[n].trim().charAt(0))) {
-				let c = lines[n].trim().charAt(0);
-				console.debug(`first char is ${c}`);
 				break;
 			}
 
 			firstLine = n;
 		}
-		console.debug(`firstLine = ${firstLine}`);
 
 		// Now capture any remaining lines until the end of the function.
 		let lastLine = range.end.line;
@@ -93,7 +89,6 @@ export class Renderer {
 		// Also for variable defs.
 		let trimmedStart = lines[range.start.line].trim();
 		if (trimmedStart.search(/;$/) >= 0) {
-			console.debug(`start inside block - line ${range.start.line}`);
 			insideBlock = true;
 		}
 
@@ -108,7 +103,6 @@ export class Renderer {
 				// Keep searching until the next non-blank line that is 
 				// at a shorter indent level.
 				if (lineIndent < indent) {
-					console.debug("BREAK: indent less");
 					break;
 				} else if (insideBlock && lineIndent === indent) {
 					// Ignore {
@@ -143,7 +137,6 @@ export class Renderer {
 						}
 					}
 
-					console.debug("BREAK: inside block & indent same");
 					break;
 				}
 
@@ -151,7 +144,6 @@ export class Renderer {
 				let inBlockFirstChars = ['{'];
 				let inBlockLastChars = [':', '{', ';', '}'];
 				if (lineIndent > indent || inBlockFirstChars.includes(firstChar) || inBlockLastChars.includes(lastChar)) {
-					console.debug(`inside block now (line ${n}`);
 					insideBlock = true;
 				}
 
@@ -160,7 +152,6 @@ export class Renderer {
 				}
 			}
 		}
-		console.debug(`lastLine = ${lastLine}`);
 		lines = lines.slice(firstLine, lastLine + 1).map((x) => { return x.substring(indent) });
 		return lines.join("\n") + "\n";
 	}
