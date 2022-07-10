@@ -1,0 +1,132 @@
+{
+	"name": "definition-view",
+	"displayName": "Definition View",
+	"description": "Display full code definition in the sidebar.",
+	"version": "0.0.1",
+	"publisher": "stevepryde",
+	"keywords": [
+		"definition",
+		"docs",
+		"hover",
+		"sidebar",
+		"panel"
+	],
+	"galleryBanner": {
+		"color": "4C4C4C",
+		"theme": "dark"
+	},
+	"icon": "icon.png",
+	"engines": {
+		"vscode": "^1.50.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onView:defView.definition",
+		"onCommand:defView.definitionView.pin",
+		"onCommand:defView.definitionView.unpin"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/stevepryde/vscode-def-view.git"
+	},
+	"bugs": "https://github.com/stevepryde/vscode-def-view/issues",
+	"main": "./dist/extension",
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],
+	"contributes": {
+		"views": {
+			"explorer": [
+				{
+					"type": "webview",
+					"id": "defView.definition",
+					"name": "Definition View",
+					"contextualTitle": "Definition View"
+				}
+			]
+		},
+		"commands": [
+			{
+				"command": "defView.definitionView.pin",
+				"title": "Pin Current Definition",
+				"icon": "$(pin)",
+				"category": "Definition View"
+			},
+			{
+				"command": "defView.definitionView.unpin",
+				"title": "Unpin Current Definition",
+				"icon": "$(pinned)",
+				"category": "Definition View"
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "defView.definitionView.pin",
+					"when": "!defView.definitionView.isPinned"
+				},
+				{
+					"command": "defView.definitionView.unpin",
+					"when": "defView.definitionView.isPinned"
+				}
+			],
+			"view/title": [
+				{
+					"command": "defView.definitionView.pin",
+					"when": "view == defView.definition && !defView.definitionView.isPinned",
+					"group": "navigation"
+				},
+				{
+					"command": "defView.definitionView.unpin",
+					"when": "view == defView.definition && defView.definitionView.isPinned",
+					"group": "navigation"
+				}
+			]
+		},
+		"configuration": {
+			"title": "Definition View",
+			"properties": {
+				"defView.definitionView.updateMode": {
+					"type": "string",
+					"description": "Controls how the definition view is updated when the cursor moves.",
+					"default": "live",
+					"enum": [
+						"live",
+						"sticky"
+					],
+					"enumDescriptions": [
+						"The definition view tracks the current cursor position. Display empty content if no symbol is found at the current position.",
+						"The definition view tries to show the definition for the symbol at the current cursor position. If there is none, it continues showing the last available definition."
+					]
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "webpack --mode production",
+		"webpack": "webpack --mode development",
+		"webpack-dev": "webpack --mode development --watch",
+		"lint": "eslint . --ext .ts,.tsx"
+	},
+	"dependencies": {
+		"json5": "^2.1.3",
+		"oniguruma": "^7.2.1",
+		"shiki": "^0.2.5",
+		"shiki-themes": "^0.2.5"
+	},
+	"devDependencies": {
+		"@types/json5": "0.0.30",
+		"@types/node": "^14.11.2",
+		"@types/vscode": "^1.50.0",
+		"@typescript-eslint/eslint-plugin": "^3.0.2",
+		"@typescript-eslint/parser": "^3.0.2",
+		"eslint": "^7.1.0",
+		"ts-loader": "^8.0.4",
+		"typescript": "^4.6.4",
+		"webpack": "^5.72.0",
+		"webpack-cli": "^4.9.0"
+	}
+}
