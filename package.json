@@ -2,7 +2,7 @@
 	"name": "definition-view",
 	"displayName": "Definition View",
 	"description": "Display full code definition in the sidebar.",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"publisher": "stevepryde",
 	"keywords": [
 		"definition",
