@@ -16,7 +16,7 @@ pre code {
 
 #main>* {
 	padding: 0 20px;
-	width: 1000px;
+	width: fit-content;
 	overflow-x: scroll;
 }
 
